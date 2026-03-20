@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planos — PropostaPro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<nav class="nav scrolled">
+  <div class="nav-inner">
+    <a href="/" class="logo">Proposta<span>Pro</span></a>
+    <div class="nav-links"><a href="/">Início</a><a href="/#recursos">Recursos</a></div>
+    <div class="nav-cta" id="nav-cta">
+      <a href="/login" class="btn-ghost-sm">Entrar</a>
+      <a href="/cadastro" class="btn-primary-sm">Começar grátis</a>
+    </div>
+  </div>
+</nav>
+<div class="pricing-page">
+  <div class="pricing-hero">
+    <div class="section-label">Preços</div>
+    <h1>Simples. Transparente. Sem surpresas.</h1>
+    <p>Cancele quando quiser. Sem multas, sem burocracia.</p>
+    <div id="payment-banner" style="display:none;margin:20px auto;max-width:500px;padding:14px 20px;border-radius:12px;font-size:14px;"></div>
+    <div class="pricing-toggle">
+      <span>Mensal</span>
+      <div class="toggle-switch" id="billing-toggle"><div class="toggle-knob"></div></div>
+      <span>Anual <span class="toggle-save">Economize 20%</span></span>
+    </div>
+  </div>
+  <div class="container" style="padding-bottom:80px;">
+    <div class="pricing-cards" style="max-width:960px;margin:0 auto;">
+      <div class="pricing-card">
+        <div class="plan-name">Grátis</div>
+        <div class="plan-price">R$ 0<span>/mês</span></div>
+        <div class="plan-desc">Para testar o produto</div>
+        <ul class="plan-features">
+          <li class="ok">3 propostas por mês</li><li class="ok">Contrato incluído</li><li class="ok">Exportar como texto</li><li class="ok">Histórico por 30 dias</li>
+          <li class="no">PDF com sua logo</li><li class="no">Link de aceite digital</li><li class="no">Notificação de abertura</li><li class="no">Histórico ilimitado</li>
+        </ul>
+        <a href="/cadastro" class="btn-plan-ghost">Começar grátis</a>
+      </div>
+      <div class="pricing-card pricing-card-featured">
+        <div class="plan-badge">Mais popular</div>
+        <div class="plan-name">Solo</div>
+        <div class="plan-price" id="solo-price">R$ 29<span>/mês</span></div>
+        <div class="plan-desc">Para freelancers e autônomos</div>
+        <ul class="plan-features">
+          <li class="ok">Propostas ilimitadas</li><li class="ok">Contrato incluído</li><li class="ok">PDF com sua logo</li><li class="ok">Link de aceite digital</li>
+          <li class="ok">Notificação de abertura</li><li class="ok">Histórico ilimitado</li><li class="ok">Templates por nicho</li><li class="no">Múltiplos usuários</li>
+        </ul>
+        <button type="button" class="btn-plan-primary" id="btn-solo">Assinar Solo</button>
+      </div>
+      <div class="pricing-card">
+        <div class="plan-name">Agência</div>
+        <div class="plan-price" id="agencia-price">R$ 79<span>/mês</span></div>
+        <div class="plan-desc">Para times e agências</div>
+        <ul class="plan-features">
+          <li class="ok">Tudo do Solo</li><li class="ok">Até 5 usuários</li><li class="ok">Templates personalizados</li><li class="ok">Marca da agência no link</li>
+          <li class="ok">Relatórios de conversão</li><li class="ok">Suporte prioritário</li><li class="ok">Onboarding guiado</li><li class="ok">Fatura com CNPJ</li>
+        </ul>
+        <button type="button" class="btn-plan-ghost" id="btn-agencia">Assinar Agência</button>
+      </div>
+    </div>
+    <div style="max-width:680px;margin:64px auto 0;">
+      <h2 style="font-family:'DM Serif Display',serif;font-size:36px;text-align:center;margin-bottom:40px;">Perguntas frequentes</h2>
+      <div id="faq"></div>
+    </div>
+  </div>
+</div>
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="logo">Proposta<span>Pro</span></div>
+    <div class="footer-links"><a href="/">Início</a><a href="/login">Entrar</a></div>
+    <div class="footer-copy">© 2025 PropostaPro 🇧🇷</div>
+  </div>
+</footer>
+<script>
+(function() {
+  var token = localStorage.getItem('pp_token');
+  var user  = JSON.parse(localStorage.getItem('pp_user') || '{}');
+  var isYearly = false;
+
+  if (token && user.name) {
+    document.getElementById('nav-cta').innerHTML = '<span style="font-size:14px;color:var(--ink2);margin-right:8px;">Olá, ' + user.name.split(' ')[0] + '</span><a href="/dashboard" class="btn-primary-sm">Dashboard →</a>';
+  }
+  if (user.plan === 'solo')    markCurrent('solo');
+  if (user.plan === 'agencia') markCurrent('agencia');
+
+  function markCurrent(plan) {
+    var btn = document.getElementById('btn-' + plan);
+    if (btn) { btn.textContent = '✓ Plano atual'; btn.disabled = true; btn.style.opacity = '.6'; }
+  }
+
+  document.getElementById('billing-toggle').addEventListener('click', function() {
+    isYearly = !isYearly;
+    this.classList.toggle('on', isYearly);
+    var s = isYearly ? '<span>/mês · cobrado anualmente</span>' : '<span>/mês</span>';
+    document.getElementById('solo-price').innerHTML    = (isYearly ? 'R$ 23' : 'R$ 29') + s;
+    document.getElementById('agencia-price').innerHTML = (isYearly ? 'R$ 63' : 'R$ 79') + s;
+  });
+
+  function subscribe(plan) {
+    if (!token) { window.location.href = '/cadastro?plan=' + plan; return; }
+    var planKey = plan + '_' + (isYearly ? 'yearly' : 'monthly');
+    var btn = document.getElementById('btn-' + plan);
+    var orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Redirecionando...';
+    fetch('/api/billing/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      credentials: 'include',
+      body: JSON.stringify({ planKey: planKey })
+    }).then(function(r) {
+      if (r.status === 401) { localStorage.removeItem('pp_token'); localStorage.removeItem('pp_user'); window.location.href = '/login?redirect=' + encodeURIComponent('/precos'); return null; }
+      return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; });
+    }).then(function(res) {
+      if (!res) return;
+      if (res.status === 503) { showBanner('⚠️ Stripe não configurado. Adicione as chaves no .env', 'warning'); btn.disabled = false; btn.textContent = orig; return; }
+      if (!res.ok) { showBanner(res.data.message || 'Erro ao processar.', 'error'); btn.disabled = false; btn.textContent = orig; return; }
+      window.location.href = res.data.data.sessionUrl;
+    }).catch(function() { showBanner('Erro ao processar.', 'error'); btn.disabled = false; btn.textContent = orig; });
+  }
+
+  document.getElementById('btn-solo').addEventListener('click', function() { subscribe('solo'); });
+  document.getElementById('btn-agencia').addEventListener('click', function() { subscribe('agencia'); });
+
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('payment') === 'canceled') showBanner('Pagamento cancelado. Tente novamente quando quiser.', 'warning');
+
+  function showBanner(msg, type) {
+    var el = document.getElementById('payment-banner');
+    var s = { error:'background:#FCEBEB;color:#A32D2D;border:1px solid #F09595', warning:'background:#FAEEDA;color:#854F0B;border:1px solid #FAC775', success:'background:#EAF3DE;color:#3B6D11;border:1px solid #C0DD97' };
+    el.style.cssText = s[type]; el.textContent = msg; el.style.display = 'block';
+  }
+
+  var faqs = [
+    {q:'Posso cancelar quando quiser?',a:'Sim. Cancele a qualquer momento. Sem multas ou períodos mínimos.'},
+    {q:'O que acontece com meus documentos após cancelar?',a:'Ficam salvos por 90 dias. Você pode exportá-los durante esse período.'},
+    {q:'Os contratos têm validade jurídica?',a:'Seguem o Código Civil Brasileiro. Para validade plena, recomendamos combinar com assinatura digital ICP-Brasil.'},
+    {q:'Aceita nota fiscal com CNPJ?',a:'Sim. No plano Agência emitimos nota fiscal. Nos outros o recibo vem pelo Stripe por e-mail.'},
+    {q:'Posso mudar de plano depois?',a:'Sim. Upgrade ou downgrade a qualquer momento pelo portal de assinaturas.'},
+    {q:'O pagamento é seguro?',a:'Sim. Processado pelo Stripe. Nenhum dado de cartão fica em nossos servidores.'}
+  ];
+  document.getElementById('faq').innerHTML = faqs.map(function(f) {
+    return '<div style="border-bottom:1px solid var(--border);padding:20px 0;"><div style="font-weight:500;margin-bottom:8px;font-size:15px;">'+f.q+'</div><div style="font-size:14px;color:var(--ink2);line-height:1.7;">'+f.a+'</div></div>';
+  }).join('');
+})();
+</script>
+</body>
+</html>

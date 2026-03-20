@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — PropostaPro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Proposta<span>Pro</span></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard" class="sn-item active"><span class="sn-icon">📊</span> Dashboard</a>
+      <a href="/editor"    class="sn-item"><span class="sn-icon">✦</span> Nova Proposta</a>
+      <a href="/precos"    class="sn-item"><span class="sn-icon">⭐</span> Planos</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-user-name" id="user-name">Carregando...</div>
+      <div class="sidebar-user-plan" id="user-plan">—</div>
+      <button type="button" id="btn-logout" class="sidebar-user-logout">Sair →</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="plan-banner" id="upgrade-banner" style="display:none;">
+      <div class="plan-banner-text">
+        Você está no <strong>Plano Gratuito</strong>. Restam <strong id="proposals-left">—</strong> propostas este mês.
+      </div>
+      <a href="/precos" class="btn-upgrade">Fazer Upgrade</a>
+    </div>
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Suas Propostas</h1>
+        <p class="page-sub" id="total-count">Carregando...</p>
+      </div>
+      <a href="/editor" class="btn-new">+ Nova Proposta</a>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub">propostas criadas</div></div>
+      <div class="stat-card"><div class="stat-label">Aprovadas</div><div class="stat-value" id="stat-approved">—</div><div class="stat-sub">aceitas pelo cliente</div></div>
+      <div class="stat-card"><div class="stat-label">Aguardando</div><div class="stat-value" id="stat-pending">—</div><div class="stat-sub">resposta do cliente</div></div>
+      <div class="stat-card"><div class="stat-label">Rascunhos</div><div class="stat-value" id="stat-drafts">—</div><div class="stat-sub">não enviados</div></div>
+    </div>
+
+    <div class="proposals-table">
+      <div class="table-header">
+        <span>Título / Cliente</span><span>Valor</span><span>Status</span><span>Data</span><span></span>
+      </div>
+      <div id="proposals-body">
+        <div class="empty-state">
+          <div class="empty-state-icon">📄</div>
+          <h3>Nenhuma proposta ainda</h3>
+          <p>Crie sua primeira proposta e impressione seu próximo cliente.</p>
+          <a href="/editor" class="btn-new">Criar primeira proposta</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function() {
+  var token = localStorage.getItem('pp_token');
+  if (!token) { window.location.href = '/login'; return; }
+
+  var user = JSON.parse(localStorage.getItem('pp_user') || '{}');
+  document.getElementById('user-name').textContent = user.name || 'Usuário';
+  document.getElementById('user-plan').textContent =
+    user.plan === 'solo' ? 'Plano Solo' :
+    user.plan === 'agencia' ? 'Plano Agência' : 'Plano Gratuito';
+
+  if (!user.plan || user.plan === 'free') {
+    document.getElementById('upgrade-banner').style.display = 'flex';
+    document.getElementById('proposals-left').textContent = Math.max(0, 3 - (user.proposalCountMonth || 0));
+  }
+
+  document.getElementById('btn-logout').addEventListener('click', function() {
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    localStorage.removeItem('pp_token');
+    localStorage.removeItem('pp_user');
+    window.location.href = '/login';
+  });
+
+  var urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('payment') === 'success') {
+    var plan = urlParams.get('plan');
+    setTimeout(function() { alert('🎉 Plano ' + (plan === 'agencia' ? 'Agência' : 'Solo') + ' ativado!'); }, 500);
+    history.replaceState({}, '', '/dashboard');
+  }
+
+  function statusLabel(s) {
+    return {draft:'Rascunho',sent:'Enviada',viewed:'Vista',approved:'Aprovada',rejected:'Recusada',expired:'Expirada'}[s] || s;
+  }
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'});
+  }
+  function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function deleteProposal(id) {
+    if (!confirm('Excluir esta proposta?')) return;
+    fetch('/api/proposals/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token },
+      credentials: 'include'
+    }).then(function(r) { if (r.ok) loadProposals(); else alert('Erro ao excluir.'); })
+      .catch(function() { alert('Erro ao excluir.'); });
+  }
+
+  function loadProposals() {
+    fetch('/api/proposals', {
+      headers: { 'Authorization': 'Bearer ' + token },
+      credentials: 'include'
+    }).then(function(r) {
+      if (r.status === 401) { localStorage.removeItem('pp_token'); window.location.href = '/login'; return; }
+      return r.json();
+    }).then(function(data) {
+      if (!data) return;
+      var proposals = data.data.proposals;
+      var total = data.total;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-approved').textContent = proposals.filter(function(p){return p.status==='approved';}).length;
+      document.getElementById('stat-pending').textContent = proposals.filter(function(p){return p.status==='sent'||p.status==='viewed';}).length;
+      document.getElementById('stat-drafts').textContent = proposals.filter(function(p){return p.status==='draft';}).length;
+      document.getElementById('total-count').textContent = total + ' proposta' + (total !== 1 ? 's' : '') + ' no total';
+
+      var body = document.getElementById('proposals-body');
+      if (proposals.length === 0) {
+        body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📄</div><h3>Nenhuma proposta ainda</h3><p>Crie sua primeira proposta.</p><a href="/editor" class="btn-new" style="margin:0 auto;">Criar primeira proposta</a></div>';
+        return;
+      }
+      body.innerHTML = proposals.map(function(p) {
+        return '<div class="table-row" data-id="' + p._id + '">' +
+          '<div><div class="row-title">' + esc(p.title||'Sem título') + '</div><div class="row-client">' + esc((p.client&&p.client.name)||'—') + '</div></div>' +
+          '<div class="row-value">' + esc((p.project&&p.project.totalValue)||'—') + '</div>' +
+          '<div><span class="status-badge status-' + p.status + '">' + statusLabel(p.status) + '</span></div>' +
+          '<div class="row-date">' + fmtDate(p.createdAt) + '</div>' +
+          '<div class="row-actions">' +
+          '<button class="btn-icon edit-btn" data-id="' + p._id + '" title="Editar">✏️</button>' +
+          '<button class="btn-icon del-btn"  data-id="' + p._id + '" title="Excluir">🗑️</button>' +
+          '</div></div>';
+      }).join('');
+
+      body.querySelectorAll('.table-row').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+          if (e.target.closest('.btn-icon')) return;
+          window.location.href = '/editor?id=' + row.dataset.id;
+        });
+      });
+      body.querySelectorAll('.edit-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation(); window.location.href = '/editor?id=' + btn.dataset.id; });
+      });
+      body.querySelectorAll('.del-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) { e.stopPropagation(); deleteProposal(btn.dataset.id); });
+      });
+    }).catch(function() {
+      document.getElementById('proposals-body').innerHTML = '<div class="empty-state"><p style="color:var(--ink3)">Erro ao carregar. <a href="#" id="retry" style="color:var(--accent)">Tentar novamente</a></p></div>';
+      var retry = document.getElementById('retry');
+      if (retry) retry.addEventListener('click', function(e) { e.preventDefault(); loadProposals(); });
+    });
+  }
+
+  loadProposals();
+})();
+</script>
+</body>
+</html>

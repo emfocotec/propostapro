@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor — PropostaPro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/editor.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Proposta<span>Pro</span></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard" class="sn-item"><span class="sn-icon">📊</span> Dashboard</a>
+      <a href="/editor"    class="sn-item active"><span class="sn-icon">✦</span> Nova Proposta</a>
+      <a href="/precos"    class="sn-item"><span class="sn-icon">⭐</span> Planos</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-user-name" id="user-name">—</div>
+      <div class="sidebar-user-plan" id="user-plan">—</div>
+      <button type="button" id="btn-logout" class="sidebar-user-logout">Sair →</button>
+    </div>
+  </aside>
+
+  <main class="main-content" style="padding:0;display:flex;flex-direction:column;">
+    <div class="editor-topbar">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <a href="/dashboard" style="color:var(--ink2);font-size:13px;text-decoration:none;">← Voltar</a>
+        <span id="doc-title-display" style="font-weight:500;font-size:15px;">Nova Proposta</span>
+        <span id="save-status" style="font-size:12px;"></span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn-top" id="btn-save">💾 Salvar</button>
+        <button type="button" class="btn-top btn-top-primary" id="btn-generate">✦ Gerar</button>
+      </div>
+    </div>
+
+    <div class="editor-body">
+      <div class="editor-form">
+        <div class="step-nav-ed">
+          <div class="sne active" data-step="1"><span class="sne-num">1</span> Você</div>
+          <div class="sne"        data-step="2"><span class="sne-num">2</span> Cliente</div>
+          <div class="sne"        data-step="3"><span class="sne-num">3</span> Serviços</div>
+          <div class="sne"        data-step="4"><span class="sne-num">4</span> Condições</div>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="form-step" id="fs-1">
+          <div class="fs-title">Seus dados</div>
+          <div class="fe-group"><label>Tipo de profissional</label>
+            <div class="chip-g" id="cg-prof">
+              <div class="chip" data-v="freelancer">Freelancer</div>
+              <div class="chip" data-v="agencia">Agência</div>
+              <div class="chip" data-v="dev">Dev/Designer</div>
+              <div class="chip" data-v="consultor">Consultor</div>
+            </div>
+          </div>
+          <div class="fe-group"><label>Nome / Empresa *</label><input type="text" id="my-name" placeholder="Studio Lima"></div>
+          <div class="fe-row">
+            <div class="fe-group"><label>CNPJ / CPF</label><input type="text" id="my-doc" placeholder="00.000.000/0001-00"></div>
+            <div class="fe-group"><label>E-mail</label><input type="email" id="my-email" placeholder="ola@empresa.com"></div>
+          </div>
+          <div class="fe-group"><label>Endereço</label><input type="text" id="my-addr" placeholder="Rua, nº — Cidade/UF"></div>
+          <button type="button" class="btn-next" id="btn-next-1">Próximo →</button>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="form-step" id="fs-2">
+          <div class="fs-title">Dados do cliente</div>
+          <div class="fe-group"><label>Nome / Empresa do cliente *</label><input type="text" id="cl-name" placeholder="Marcas & Cia Ltda"></div>
+          <div class="fe-row">
+            <div class="fe-group"><label>CNPJ / CPF</label><input type="text" id="cl-doc" placeholder="00.000.000/0001-00"></div>
+            <div class="fe-group"><label>Responsável</label><input type="text" id="cl-contact" placeholder="Nome do responsável"></div>
+          </div>
+          <div class="fe-group"><label>E-mail do cliente</label><input type="email" id="cl-email" placeholder="contato@cliente.com"></div>
+          <div class="fe-group"><label>Endereço</label><input type="text" id="cl-addr" placeholder="Rua, nº — Cidade/UF"></div>
+          <div class="step-btns">
+            <button type="button" class="btn-back" id="btn-back-2">← Voltar</button>
+            <button type="button" class="btn-next" id="btn-next-2">Próximo →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="form-step" id="fs-3">
+          <div class="fs-title">Serviços</div>
+          <div class="fe-group"><label>Tipo de projeto</label>
+            <div class="chip-g" id="cg-proj">
+              <div class="chip" data-v="site">Site</div>
+              <div class="chip" data-v="branding">Branding</div>
+              <div class="chip" data-v="social">Social Media</div>
+              <div class="chip" data-v="dev">Dev</div>
+              <div class="chip" data-v="consultoria">Consultoria</div>
+              <div class="chip" data-v="outro">Outro</div>
+            </div>
+          </div>
+          <div class="fe-group"><label>Serviços e valores *</label>
+            <div id="svc-list">
+              <div class="svc-row">
+                <input type="text" class="svc-name" placeholder="Nome do serviço">
+                <input type="text" class="svc-price" placeholder="R$ 0,00">
+                <button type="button" class="svc-del">×</button>
+              </div>
+            </div>
+            <button type="button" class="btn-add-svc" id="btn-add-svc">+ Adicionar serviço</button>
+          </div>
+          <div class="fe-group"><label>Total</label><div class="total-display" id="total-display">R$ 0,00</div></div>
+          <div class="fe-group"><label>Detalhes do escopo (opcional)</label><textarea id="scope" placeholder="O que está incluso, exclusões, entregas..."></textarea></div>
+          <div class="step-btns">
+            <button type="button" class="btn-back" id="btn-back-3">← Voltar</button>
+            <button type="button" class="btn-next" id="btn-next-3">Próximo →</button>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="form-step" id="fs-4">
+          <div class="fs-title">Condições</div>
+          <div class="fe-row">
+            <div class="fe-group"><label>Início</label><input type="date" id="start-date"></div>
+            <div class="fe-group"><label>Entrega</label><input type="date" id="end-date"></div>
+          </div>
+          <div class="fe-group"><label>Pagamento</label>
+            <div class="chip-g" id="cg-pay">
+              <div class="chip" data-v="50-50">50% + 50%</div>
+              <div class="chip" data-v="30-70">30% + 70%</div>
+              <div class="chip" data-v="mensal">Mensal</div>
+              <div class="chip" data-v="avista">À vista</div>
+            </div>
+          </div>
+          <div class="fe-group"><label>Método</label>
+            <div class="chip-g" id="cg-method">
+              <div class="chip" data-v="pix">PIX</div>
+              <div class="chip" data-v="boleto">Boleto</div>
+              <div class="chip" data-v="transferencia">Transferência</div>
+            </div>
+          </div>
+          <div class="fe-group"><label>Revisões</label>
+            <div class="chip-g" id="cg-rev">
+              <div class="chip" data-v="1 rodada">1 rodada</div>
+              <div class="chip selected" data-v="2 rodadas">2 rodadas</div>
+              <div class="chip" data-v="3 rodadas">3 rodadas</div>
+              <div class="chip" data-v="ilimitado">Ilimitado</div>
+            </div>
+          </div>
+          <div class="fe-group"><label>Validade</label>
+            <div class="chip-g" id="cg-val">
+              <div class="chip selected" data-v="7">7 dias</div>
+              <div class="chip" data-v="15">15 dias</div>
+              <div class="chip" data-v="30">30 dias</div>
+            </div>
+          </div>
+          <div class="fe-group"><label>Tom</label>
+            <div class="chip-g" id="cg-tone">
+              <div class="chip selected" data-v="profissional">Profissional</div>
+              <div class="chip" data-v="direto">Direto</div>
+              <div class="chip" data-v="warm">Caloroso</div>
+            </div>
+          </div>
+          <div class="step-btns">
+            <button type="button" class="btn-back" id="btn-back-4">← Voltar</button>
+            <button type="button" class="btn-next btn-next-green" id="btn-gerar">✦ Gerar documentos</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-preview">
+        <div class="preview-bar">
+          <div class="preview-tabs">
+            <button type="button" class="ptab active" id="ptab-proposta">Proposta</button>
+            <button type="button" class="ptab"        id="ptab-contrato">Contrato</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn-top" id="btn-copy">📋 Copiar</button>
+            <button type="button" class="btn-top" id="btn-share" style="display:none;">🔗 Link de aceite</button>
+            <button type="button" class="btn-top" id="btn-print">🖨 Imprimir/PDF</button>
+          </div>
+        </div>
+        <div class="doc-area" id="doc-area">
+          <div class="doc-empty-state">
+            <div style="font-size:48px;opacity:.2;">✦</div>
+            <h3>Preencha o formulário e clique em Gerar</h3>
+            <p>Sua proposta e contrato aparecerão aqui.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="/js/templates.js"></script>
+<script src="/js/editor.js"></script>
+</body>
+</html>

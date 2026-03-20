@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aceitar Proposta — PropostaPro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="/css/editor.css">
+<style>
+body{background:var(--bg2);}
+.accept-shell{max-width:880px;margin:0 auto;padding:40px 24px 80px;}
+.accept-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+.accept-logo{font-family:'DM Serif Display',serif;font-size:20px;}
+.accept-logo span{color:var(--accent);}
+.accept-status{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;}
+.status-pending{background:var(--accent-bg);color:var(--accent);}
+.status-accepted{background:var(--green-bg);color:var(--green);}
+.accept-footer{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 32px;margin-top:24px;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+.accept-footer h3{font-size:18px;font-weight:500;margin-bottom:4px;}
+.accept-footer p{font-size:14px;color:var(--ink2);}
+.btn-accept{padding:14px 32px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;white-space:nowrap;}
+.btn-accept:hover{background:#1f5238;}
+.btn-accept:disabled{background:var(--ink3);cursor:not-allowed;}
+.accepted-banner{background:var(--green-bg);border:1px solid #9FE1CB;border-radius:var(--radius);padding:24px 32px;text-align:center;margin-top:24px;}
+.accepted-banner h3{font-family:'DM Serif Display',serif;font-size:28px;color:var(--green);margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div class="accept-shell">
+  <div class="accept-header">
+    <a href="/" class="accept-logo">Proposta<span>Pro</span></a>
+    <div class="accept-status status-pending" id="status-badge">Aguardando aceite</div>
+  </div>
+  <div id="loading-state" style="text-align:center;padding:80px;"><p style="color:var(--ink2)">Carregando proposta...</p></div>
+  <div id="error-state"   style="display:none;text-align:center;padding:80px;">
+    <div style="font-size:48px;margin-bottom:16px">🔗</div>
+    <h3 style="font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:8px;">Link inválido</h3>
+    <p style="color:var(--ink2)">Esta proposta não foi encontrada ou o link expirou.</p>
+  </div>
+  <div id="doc-container" style="display:none;">
+    <div id="doc-area"></div>
+    <div id="accept-footer" class="accept-footer">
+      <div><h3>Aceitar esta proposta?</h3><p>Ao clicar, você confirma o interesse nos serviços descritos.</p></div>
+      <button type="button" class="btn-accept" id="btn-accept">✓ Aceitar proposta</button>
+    </div>
+    <div id="accepted-banner" class="accepted-banner" style="display:none;">
+      <h3>✓ Proposta aceita!</h3>
+      <p>O prestador será notificado. Aguarde o contato para próximos passos.</p>
+    </div>
+  </div>
+</div>
+<script src="/js/templates.js"></script>
+<script>
+(function() {
+  var parts = window.location.pathname.split('/');
+  var token = parts[parts.length - 1];
+
+  function showAccepted() {
+    document.getElementById('accept-footer').style.display = 'none';
+    document.getElementById('accepted-banner').style.display = 'block';
+    document.getElementById('status-badge').textContent = 'Aceita ✓';
+    document.getElementById('status-badge').className = 'accept-status status-accepted';
+  }
+
+  document.getElementById('btn-accept').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true; btn.textContent = 'Processando...';
+    fetch('/api/proposals/accept/' + token + '/sign', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      .then(function(r) {
+        if (r.ok) showAccepted();
+        else r.json().then(function(d) { alert(d.message || 'Erro ao aceitar.'); btn.disabled = false; btn.textContent = '✓ Aceitar proposta'; });
+      }).catch(function() { alert('Erro de conexão.'); btn.disabled = false; btn.textContent = '✓ Aceitar proposta'; });
+  });
+
+  fetch('/api/proposals/accept/' + token)
+    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+    .then(function(res) {
+      document.getElementById('loading-state').style.display = 'none';
+      if (!res.ok) { document.getElementById('error-state').style.display = 'block'; return; }
+      var p = res.data.data.proposal;
+      document.getElementById('doc-container').style.display = 'block';
+      if (p.status === 'approved') { showAccepted(); return; }
+      document.getElementById('doc-area').innerHTML = p.proposalHtml || PropostaTemplates.buildProposta({ provider: p.provider, client: p.client, project: p.project, conditions: p.conditions });
+      document.querySelectorAll('[contenteditable]').forEach(function(el) { el.removeAttribute('contenteditable'); });
+    }).catch(function() {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display = 'block';
+    });
+})();
+</script>
+</body>
+</html>

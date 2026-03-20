@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Criar Conta — PropostaPro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo"><a href="/">Proposta<span>Pro</span></a></div>
+    <h1 class="auth-title">Criar conta grátis</h1>
+    <p class="auth-sub">3 propostas por mês sem precisar de cartão.</p>
+    <div class="alert alert-error"   id="alert-error"></div>
+    <div class="alert alert-success" id="alert-success"></div>
+    <div class="form-group">
+      <label for="name">Seu nome</label>
+      <input type="text" id="name" placeholder="Como você se chama?" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label for="email">E-mail</label>
+      <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label for="password">Senha</label>
+      <input type="password" id="password" placeholder="Mínimo 8 caracteres (letras e números)" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label for="passwordConfirm">Confirmar senha</label>
+      <input type="password" id="passwordConfirm" placeholder="Repita a senha" autocomplete="new-password">
+    </div>
+    <button class="btn-auth" id="btn-register" onclick="handleRegister()">Criar conta</button>
+    <div class="auth-footer">Já tem conta? <a href="/login">Entrar</a></div>
+  </div>
+</div>
+<script>
+const token = localStorage.getItem('pp_token');
+if (token) window.location.href = '/dashboard';
+
+document.getElementById('passwordConfirm').addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+
+async function handleRegister() {
+  const name            = document.getElementById('name').value.trim();
+  const email           = document.getElementById('email').value.trim();
+  const password        = document.getElementById('password').value;
+  const passwordConfirm = document.getElementById('passwordConfirm').value;
+  const btn             = document.getElementById('btn-register');
+  clearAlerts();
+  if (!name || !email || !password || !passwordConfirm) { showError('Preencha todos os campos.'); return; }
+  if (password !== passwordConfirm) { showError('As senhas não coincidem.'); return; }
+  if (password.length < 8)          { showError('Senha deve ter pelo menos 8 caracteres.'); return; }
+  if (!/(?=.*[a-zA-Z])(?=.*[0-9])/.test(password)) { showError('Senha deve conter letras e números.'); return; }
+  btn.disabled = true; btn.textContent = 'Criando conta...';
+  try {
+    const res  = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ name, email, password, passwordConfirm })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.message || 'Erro ao criar conta.'); return; }
+    // SALVA TOKEN E USUÁRIO
+    localStorage.setItem('pp_token', data.token);
+    localStorage.setItem('pp_user',  JSON.stringify(data.data.user));
+    // Se veio de um plano, vai direto para checkout
+    const params = new URLSearchParams(window.location.search);
+    const plan   = params.get('plan');
+    window.location.href = plan ? `/precos?plan=${plan}` : '/dashboard';
+  } catch (err) {
+    showError('Erro de conexão. Verifique sua internet.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Criar conta';
+  }
+}
+function showError(msg)   { const e = document.getElementById('alert-error');   e.textContent = msg; e.classList.add('show'); }
+function showSuccess(msg) { const e = document.getElementById('alert-success'); e.textContent = msg; e.classList.add('show'); }
+function clearAlerts()    { document.getElementById('alert-error').classList.remove('show'); document.getElementById('alert-success').classList.remove('show'); }
+</script>
+</body>
+</html>

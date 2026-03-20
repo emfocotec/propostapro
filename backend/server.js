@@ -36,10 +36,21 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({
-  origin: (origin, callback) => {
-    // Permite requests sem origin (Postman, curl) apenas em dev
-    if (!origin && process.env.NODE_ENV === 'development') return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+  origin: function(origin, callback) {
+    // Permite requests sem origin (mobile, Postman, mesmo servidor)
+    if (!origin) return callback(null, true);
+    
+    const allowed = [
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000'
+    ].filter(Boolean);
+
+    // Permite qualquer subdomínio do onrender.com
+    if (origin.endsWith('.onrender.com')) return callback(null, true);
+    
+    if (allowed.includes(origin)) return callback(null, true);
+    
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
